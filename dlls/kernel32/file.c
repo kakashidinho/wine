@@ -48,6 +48,9 @@
 #include "wine/unicode.h"
 #include "wine/debug.h"
 
+#define LHQ_DEBUG 0
+#define LHQ_COPY_WSTR 1
+
 WINE_DEFAULT_DEBUG_CHANNEL(file);
 
 /* info structure for FindFirstFile handle */
@@ -1369,6 +1372,37 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
         FILE_OVERWRITE      /* TRUNCATE_EXISTING */
     };
 
+    //begin LHQ
+#if LHQ_DEBUG
+#if 0
+    printf("CreateFileW is called\n");
+#else
+    if (filename != NULL)
+    {
+        size_t cfilenamelen = wcslen(filename);
+        char* cfilename = malloc((cfilenamelen + 1) * sizeof(char));
+    #if LHQ_COPY_WSTR
+        for (size_t i = 0; i < cfilenamelen; ++i)
+            cfilename[i] = (char)filename[i];
+    #else
+        #if 1
+        FILE_name_WtoA(filename, -1, cfilename, cfilenamelen);
+        #else
+        size_t ret = wcstombs ( cfilename, filename, cfilenamelen );
+        if (ret != (size_t) -1)
+            cfilename[ret] = '\0';
+        #endif
+    #endif
+
+        printf("CreateFileW(%s) is called\n", cfilename);
+
+        free(cfilename);
+    }
+    else
+        printf("CreateFileW(NULL)\n");
+#endif
+#endif//LHQ_DEBUG
+    //end LHQ
 
     /* sanity checks */
 
@@ -1454,6 +1488,31 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
         SetLastError( ERROR_PATH_NOT_FOUND );
         return INVALID_HANDLE_VALUE;
     }
+
+    //begin LHQ
+#if LHQ_DEBUG
+    {
+        size_t cfilenamelen = nameW.Length;
+        char* cfilename = malloc((cfilenamelen + 1) * sizeof(char));
+    #if LHQ_COPY_WSTR
+        for (size_t i = 0; i < cfilenamelen; ++i)
+            cfilename[i] = (char)nameW.Buffer[i];
+    #else
+        #if 1
+        FILE_name_WtoA(nameW.Buffer, -1, cfilename, cfilenamelen);
+        #else
+        size_t ret = wcstombs ( cfilename, nameW.Buffer, cfilenamelen );
+        if (ret != (size_t) -1)
+            cfilename[ret] = '\0';
+        #endif
+    #endif
+
+        printf("CreateFileW() converted path = %s\n", cfilename);
+
+        free(cfilename);
+    }
+#endif//LHQ_DEBUG
+    //end LHQ
 
     /* now call NtCreateFile */
 
@@ -1547,7 +1606,9 @@ HANDLE WINAPI CreateFileA( LPCSTR filename, DWORD access, DWORD sharing,
                            DWORD attributes, HANDLE template)
 {
     WCHAR *nameW;
-
+#if LHQ_DEBUG
+	printf("CreateFileA(\"%s\")\n", filename);
+#endif
     if (!(nameW = FILE_name_AtoW( filename, FALSE ))) return INVALID_HANDLE_VALUE;
     return CreateFileW( nameW, access, sharing, sa, creation, attributes, template );
 }
@@ -1587,6 +1648,38 @@ BOOL WINAPI DeleteFileW( LPCWSTR path )
     HANDLE hFile;
     IO_STATUS_BLOCK io;
 
+    //begin LHQ
+#if LHQ_DEBUG
+#if 0
+    printf("CreateFileW is called\n");
+#else
+    if (path != NULL)
+    {
+        size_t cfilenamelen = wcslen(path);
+        char* cfilename = malloc((cfilenamelen + 1) * sizeof(char));
+    #if LHQ_COPY_WSTR
+        for (size_t i = 0; i < cfilenamelen; ++i)
+            cfilename[i] = (char)path[i];
+    #else
+        #if 1
+        FILE_name_WtoA(path, -1, cfilename, cfilenamelen);
+        #else
+        size_t ret = wcstombs ( cfilename, path, cfilenamelen );
+        if (ret != (size_t) -1)
+            cfilename[ret] = '\0';
+        #endif
+    #endif
+
+        printf("DeleteFileW(%s) is called\n", cfilename);
+
+        free(cfilename);
+    }
+    else
+        printf("DeleteFileW(NULL)\n");
+#endif
+#endif//LHQ_DEBUG
+    //end LHQ
+
     TRACE("%s\n", debugstr_w(path) );
 
     if (!RtlDosPathNameToNtPathName_U( path, &nameW, NULL, NULL ))
@@ -1594,6 +1687,31 @@ BOOL WINAPI DeleteFileW( LPCWSTR path )
         SetLastError( ERROR_PATH_NOT_FOUND );
         return FALSE;
     }
+
+    //begin LHQ
+#if LHQ_DEBUG
+    {
+        size_t cfilenamelen = nameW.Length;
+        char* cfilename = malloc((cfilenamelen + 1) * sizeof(char));
+    #if LHQ_COPY_WSTR
+        for (size_t i = 0; i < cfilenamelen; ++i)
+            cfilename[i] = (char)nameW.Buffer[i];
+    #else
+        #if 1
+        FILE_name_WtoA(nameW.Buffer, -1, cfilename, cfilenamelen);
+        #else
+        size_t ret = wcstombs ( cfilename, nameW.Buffer, cfilenamelen );
+        if (ret != (size_t) -1)
+            cfilename[ret] = '\0';
+        #endif
+    #endif
+
+        printf("DeleteFileW() converted path = %s\n", cfilename);
+
+        free(cfilename);
+    }
+#endif//LHQ_DEBUG
+    //end LHQ
 
     attr.Length = sizeof(attr);
     attr.RootDirectory = 0;
@@ -1627,6 +1745,9 @@ BOOL WINAPI DeleteFileA( LPCSTR path )
 {
     WCHAR *pathW;
 
+#if LHQ_DEBUG
+    printf("DeleteFileA(\"%s\")\n", path);
+#endif
     if (!(pathW = FILE_name_AtoW( path, FALSE ))) return FALSE;
     return DeleteFileW( pathW );
 }

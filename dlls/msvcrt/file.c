@@ -49,6 +49,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
+#define LHQ_DEBUG 0
+
 /* for stat mode, permissions apply to all,owner and group */
 #define ALL_S_IREAD  (MSVCRT__S_IREAD  | (MSVCRT__S_IREAD  >> 3) | (MSVCRT__S_IREAD  >> 6))
 #define ALL_S_IWRITE (MSVCRT__S_IWRITE | (MSVCRT__S_IWRITE >> 3) | (MSVCRT__S_IWRITE >> 6))
@@ -2096,6 +2098,9 @@ static int check_bom(HANDLE h, int oflags, BOOL seek)
  */
 int CDECL MSVCRT__wsopen_s( int *fd, const MSVCRT_wchar_t* path, int oflags, int shflags, int pmode )
 {
+#if LHQ_DEBUG
+  printf("wsopen_s is called\n");
+#endif
   DWORD access = 0, creation = 0, attrib;
   SECURITY_ATTRIBUTES sa;
   DWORD sharing, type;
@@ -2173,6 +2178,10 @@ int CDECL MSVCRT__wsopen_s( int *fd, const MSVCRT_wchar_t* path, int oflags, int
           && (creation==OPEN_ALWAYS || creation==OPEN_EXISTING)
           && !(access&GENERIC_READ))
   {
+
+#if LHQ_DEBUG
+      printf("CreateFileW is being called\n");
+#endif
       hand = CreateFileW(path, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE,
               &sa, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
       if (hand != INVALID_HANDLE_VALUE)
@@ -2184,6 +2193,9 @@ int CDECL MSVCRT__wsopen_s( int *fd, const MSVCRT_wchar_t* path, int oflags, int
           oflags &= ~(MSVCRT__O_WTEXT|MSVCRT__O_U16TEXT|MSVCRT__O_U8TEXT);
   }
 
+#if LHQ_DEBUG
+      printf("2nd CreateFileW is being called\n");
+#endif
   hand = CreateFileW(path, access, sharing, &sa, creation, attrib, 0);
   if (hand == INVALID_HANDLE_VALUE)  {
     WARN(":failed-last error (%d)\n",GetLastError());
@@ -2257,6 +2269,9 @@ int CDECL MSVCRT__wsopen_s( int *fd, const MSVCRT_wchar_t* path, int oflags, int
  */
 int CDECL MSVCRT__wsopen( const MSVCRT_wchar_t *path, int oflags, int shflags, ... )
 {
+#if LHQ_DEBUG
+  printf("wsopen is called\n");
+#endif
   int pmode;
   int fd;
 
@@ -3942,6 +3957,9 @@ MSVCRT_wint_t CDECL MSVCRT__fputwchar(MSVCRT_wint_t wc)
  */
 MSVCRT_FILE * CDECL MSVCRT__wfsopen(const MSVCRT_wchar_t *path, const MSVCRT_wchar_t *mode, int share)
 {
+#if LHQ_DEBUG
+  printf("wfsopen is called\n");
+#endif
   MSVCRT_FILE* file;
   int open_flags, stream_flags, fd;
 
@@ -3976,6 +3994,9 @@ MSVCRT_FILE * CDECL MSVCRT__wfsopen(const MSVCRT_wchar_t *path, const MSVCRT_wch
  */
 MSVCRT_FILE * CDECL MSVCRT__fsopen(const char *path, const char *mode, int share)
 {
+#if LHQ_DEBUG
+  printf("fsopen is called\n");
+#endif
     MSVCRT_FILE *ret;
     MSVCRT_wchar_t *pathW = NULL, *modeW = NULL;
 
@@ -4004,6 +4025,9 @@ MSVCRT_FILE * CDECL MSVCRT__fsopen(const char *path, const char *mode, int share
  */
 MSVCRT_FILE * CDECL MSVCRT_fopen(const char *path, const char *mode)
 {
+#if LHQ_DEBUG
+  printf("fopen is called\n");
+#endif
     return MSVCRT__fsopen( path, mode, MSVCRT__SH_DENYNO );
 }
 
@@ -4740,6 +4764,9 @@ void CDECL MSVCRT_setbuf(MSVCRT_FILE* file, char *buf)
  */
 char * CDECL MSVCRT_tmpnam(char *s)
 {
+#if LHQ_DEBUG
+  printf("tmpnam is called\n");
+#endif
   char tmpstr[16];
   char *p;
   int count, size;

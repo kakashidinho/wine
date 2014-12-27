@@ -41,6 +41,8 @@
 #include "wine/library.h"
 #include "ntdll_misc.h"
 
+#define LHQ_DEBUG 0
+
 WINE_DEFAULT_DEBUG_CHANNEL(file);
 
 static const WCHAR DeviceRootW[] = {'\\','\\','.','\\',0};
@@ -347,6 +349,34 @@ BOOLEAN  WINAPI RtlDosPathNameToNtPathName_U(PCWSTR dos_path,
     ULONG sz, offset;
     WCHAR local[MAX_PATH];
     LPWSTR ptr;
+
+//begin LHQ
+    if (dos_path != NULL)
+    {
+        while (dos_path[0] == L'\\')
+            dos_path++;//ignore initial '\\', in windows it refers to current directory
+    }
+#if LHQ_DEBUG
+#if 0
+    printf("CreateFileW is called\n");
+#else
+    if (dos_path != NULL)
+    {
+        size_t cfilenamelen = wcslen(dos_path);
+        char* cfilename = malloc((cfilenamelen + 1) * sizeof(char));
+        for (size_t i = 0; i < cfilenamelen; ++i)
+            cfilename[i] = (char)dos_path[i];
+
+        printf("RtlDosPathNameToNtPathName_U(%s) is called\n", cfilename);
+
+        free(cfilename);
+    }
+    else
+        printf("RtlDosPathNameToNtPathName_U(NULL)\n");
+#endif
+#endif//LHQ_DEBUG
+    //end LHQ
+
 
     TRACE("(%s,%p,%p,%p)\n",
           debugstr_w(dos_path), ntpath, file_part, cd);
